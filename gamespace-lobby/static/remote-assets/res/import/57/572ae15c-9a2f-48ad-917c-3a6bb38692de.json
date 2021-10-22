@@ -1,0 +1,1 @@
+{"__type__":"cc.AnimationClip","_name":"rouletteLoadingProgress","_duration":0.5,"sample":6,"wrapMode":2,"curveData":{"comps":{"cc.Sprite":{"spriteFrame":[{"frame":0,"value":{"__uuid__":"e4mroYTjhOb5GvNY74oQ6L"}},{"frame":0.16666666666666666,"value":{"__uuid__":"6bdLevlXJCN4suXkddyfk0"}},{"frame":0.3333333333333333,"value":{"__uuid__":"a6f7u67wRMLL8oJ+9KOsyQ"}}]}}}}
