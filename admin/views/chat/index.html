@@ -1,0 +1,630 @@
+<link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" />
+
+<script src="/assets/js/protocol.js"></script>
+<script src="/assets/js/nano-websocket-client.js"></script>
+
+<script>
+    var hosturl = "{{.url}}" // config
+    var wsurl = "{{.wsurl}}" // config
+    var jwt = "{{.jwt}}" // config
+
+    // #searchBox, #messageBox
+    // ul#chat_message_listing
+    // #selectedPlayerName, #selectedPlayerUid
+
+
+    var sock = new WebSocket("{{.wsurl}}")
+
+    console.log("attempting websocket connection");
+
+    sock.onopen = function () {
+        var data = {
+            Type: "init", Data: {
+                username: "管理员",
+                faceUri: "1",
+                level: "1",
+                jwt: "{{.jwt}}",
+            }
+        }
+        this.send(JSON.stringify(data));
+    }.bind(sock)
+
+    sock.onmessage = function (obj) {
+        if (isJsonStr(obj.data)) {
+            var data = JSON.parse(obj.data);
+            if (data.code == "err") { // kick out !
+                return
+            }
+
+            // console.log(data)
+            if (data.type == "updateCustomerServiceMessageRealTime") {
+                // console.log(data)
+                if (openedUid != -1) {
+                    openMessage(openedUid, openedName, true)
+                }
+                if (currentMessageListingPageNumber != -2) {
+                    currentMessageListingPageNumber = 1
+                    getmessageslistingfrompagenumber(currentMessageListingPageNumber)
+                }
+            }
+        }
+    }.bind(sock)
+
+    function isJsonStr(item) {
+        item = typeof item !== "string"
+            ? JSON.stringify(item)
+            : item;
+
+        try {
+            item = JSON.parse(item);
+        } catch (e) {
+            return false;
+        }
+
+        if (typeof item === "object" && item !== null) {
+            return true;
+        }
+
+        return false;
+    }
+
+    var openedUid = -1
+    var openedName = ""
+
+    function sendmessagetoplayerid() {
+        var message = $('#messageBox').val();
+        if (message.trim() == "" && openedUid == -1) { return }
+
+        httppost("/customerservicemessage/sendmessagetoplayerid",
+            { player_id: String(openedUid), message: message.trim() }, function (data) {
+                console.log(data)
+
+                var message = $('#messageBox').val("");
+            });
+    }
+
+    function openMessage(uid, name = "", reload = false) {
+        if (openedUid == uid && reload == false) { return }
+        openedUid = uid
+        openedName = name
+
+        $('ul#chat_message_listing').html('')
+        $('#selectedPlayerUid').html(uid);
+
+        $('#selectedPlayerName').html(name);
+
+        httppost("/customerservicemessage/getmessagewithplayerid",
+            { player_id: String(uid) },
+            function (data) {
+                // console.log(data);
+                if (data.messages && data.messages.length) {
+                    data.messages.sort(function (a, b) {
+                        return a.customer_service_message_id - b.customer_service_message_id
+                    });
+
+                    for (var i = 0; i < data.messages.length; i++) {
+                        if (data.messages[i].sender_id == data.messages[i].player_id) {
+                            generateTheirMessage(data.messages[i].time_sent, data.messages[i].message)
+                        } else {
+                            generateMyMessage(data.messages[i].time_sent, data.messages[i].message)
+                        }
+                    }
+                    scrollToBottom()
+                }
+            });
+    }
+
+    var currentMessageListingPageNumber = 1
+    var isLoadingMessageList = false;
+
+    function getmessagelistingwithplayerid() {
+        if (isLoadingMessageList) { return; }
+        var uid = $('#searchBox').val()
+
+        if (uid.trim() == "") {
+            currentMessageListingPageNumber = 1
+            getmessageslistingfrompagenumber(currentMessageListingPageNumber)
+            return
+        } else {
+            currentMessageListingPageNumber = -2
+        }
+
+        isLoadingMessageList = true;
+        httppost("/customerservicemessage/getmessagelistingwithplayerid",
+            { player_id: uid },
+            function (data) {
+                if (data.messageListing && data.messageListing.length) {
+                    $('#playersListing').html('');
+                    for (var i = 0; i < data.messageListing.length; i++) {
+                        geneneratePlayer(data.messageListing[i].player_name, data.messageListing[i].player_id,
+                            data.messageListing[i].admin_replied)
+                    }
+                }
+                isLoadingMessageList = false;
+            });
+
+    }
+
+    function getmessageslistingfrompagenumber(pageNumber = 1, tabWanted = "All") {
+        if (isLoadingMessageList || pageNumber == -1) { return; }
+
+        if (pageNumber == 1) { $('#playersListing').html(''); }
+
+        isLoadingMessageList = true;
+
+        httppost("/customerservicemessage/getmessageslistingfrompagenumber",
+            { tabWanted: "All", pageWanted: String(pageNumber) },
+            function (data) {
+                console.log(data);
+                if (data.messageListing && data.messageListing.length) {
+                    console.log("len:", data.messageListing.length)
+                    for (var i = 0; i < data.messageListing.length; i++) {
+                        geneneratePlayer(data.messageListing[i].player_name, data.messageListing[i].player_id,
+                            data.messageListing[i].admin_replied)
+                    }
+                    currentMessageListingPageNumber++
+
+                    if (pageNumber == 1) {
+                        if ($('#plist').scrollTop() + $(this).innerHeight() >= $('#plist')[0].scrollHeight) {
+                            isLoadingMessageList = false;
+                            getmessageslistingfrompagenumber(currentMessageListingPageNumber)
+                            return
+                        }
+                    }
+
+                } else {
+                    currentMessageListingPageNumber = -1
+                }
+                isLoadingMessageList = false;
+            })
+    }
+
+    function httppost(url, param, callback) {
+        let xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4) {
+                var response = xhr.responseText;
+                // console.log(response)
+
+                var ret = null;
+                try {
+                    ret = JSON.parse(response);
+                } catch (e) {
+                    console.log("err:" + e);
+                    ret = {
+                        code: "timeout",
+                    };
+                }
+                if (callback) {
+                    callback(ret);
+                }
+            }
+        };
+
+        var requestURL = hosturl + url
+
+        xhr.open("POST", requestURL, true);
+        xhr.setRequestHeader("Authorization", jwt);
+
+        // note: In Internet Explorer, the timeout property may be set only after calling the open()
+        // method and before calling the send() method.
+        //xhr.timeout = 5000;// 5 seconds for timeout
+
+        xhr.send(JSON.stringify(param));
+    }
+
+    function scrollToBottom() {
+        $("#chat-historyWrapper").animate({ scrollTop: $("#chat-historyWrapper")[0].scrollHeight }, 0);
+    }
+
+    function geneneratePlayer(name = "Vincent Porter", uid = "1", admin_replied = false) {
+        var circle = "offline"
+        if (admin_replied == "0") {
+            circle = "online"
+        }
+
+        $('#playersListing').append(
+            `<li class="clearfix"><a href="#!" onclick="openMessage('${uid}', '${name}')">
+                            <img src="https://bootdey.com/img/Content/avatar/avatar1.png" alt="avatar">
+                            <div class="about">
+                                <div class="name">${name}</div><div class="status"> <i class="fa fa-circle ${circle}"></i>${uid}</div>
+                            </div></a>
+                        </li>`
+        )
+    }
+
+    function generateTheirMessage(msgDateTime = "", message = "") {
+        $('ul#chat_message_listing').append(
+            `<li class="clearfix">
+                <div class="message-data">
+                    <span class="message-data-time">${msgDateTime}</span>
+                </div>
+                <div class="message my-message">${message}</div>
+            </li>`
+        )
+    }
+
+    function generateMyMessage(msgDateTime = "10:10 AM, Today", message = "Hi Aiden, how are you? How is theproject coming along?") {
+        $('ul#chat_message_listing').append(`<li class="clearfix"><div class="message-data text-end"><span class="message-data-time">${msgDateTime}</span><img src="https://bootdey.com/img/Content/avatar/avatar7.png" alt="avatar"></div><div class="message other-message float-right">${message}</div></li>`)
+    }
+
+    jQuery(function ($) { // onLoad
+        $('#plist').on('scroll', function () {
+            if ($(this).scrollTop() + $(this).innerHeight() >= $(this)[0].scrollHeight) {
+                getmessageslistingfrompagenumber(currentMessageListingPageNumber)
+            }
+        });
+
+        getmessageslistingfrompagenumber(1)
+
+        // Execute a function when the user releases a key on the keyboard
+        document.getElementById("messageBox").addEventListener("keyup", function (event) {
+            // Number 13 is the "Enter" key on the keyboard
+            if (event.keyCode === 13) {
+                // Cancel the default action, if needed
+                event.preventDefault();
+                // Trigger the button element with a click
+                // document.getElementById("myBtn").click();
+                sendmessagetoplayerid()
+            }
+        });
+
+        document.getElementById('searchBox').addEventListener("keyup", function (event) {
+            // Number 13 is the "Enter" key on the keyboard
+            if (event.keyCode === 13) {
+                // Cancel the default action, if needed
+                event.preventDefault();
+                // Trigger the button element with a click
+                // document.getElementById("myBtn").click();
+                getmessagelistingwithplayerid()
+            }
+        });
+    });
+
+</script>
+
+<style>
+    body {
+        background-color: #f4f7f6;
+        margin-top: 20px;
+    }
+
+    .card {
+        background: #fff;
+        transition: .5s;
+        border: 0;
+        margin-bottom: 30px;
+        border-radius: .55rem;
+        position: relative;
+        width: 100%;
+        box-shadow: 0 1px 2px 0 rgb(0 0 0 / 10%);
+    }
+
+    .chat-app .people-list {
+        width: 280px;
+        position: absolute;
+        left: 0;
+        top: 0;
+        padding: 20px;
+        z-index: 7
+    }
+
+    .chat-app .chat {
+        margin-left: 280px;
+        border-left: 1px solid #eaeaea
+    }
+
+    .people-list {
+        -moz-transition: .5s;
+        -o-transition: .5s;
+        -webkit-transition: .5s;
+        transition: .5s
+    }
+
+    .people-list .chat-list li {
+        padding: 10px 15px;
+        list-style: none;
+        border-radius: 3px
+    }
+
+    .people-list .chat-list li:hover {
+        background: #efefef;
+        cursor: pointer
+    }
+
+    .people-list .chat-list li.active {
+        background: #efefef
+    }
+
+    .people-list .chat-list li .name {
+        font-size: 15px
+    }
+
+    .people-list .chat-list img {
+        width: 45px;
+        border-radius: 50%
+    }
+
+    .people-list img {
+        float: left;
+        border-radius: 50%
+    }
+
+    .people-list .about {
+        float: left;
+        padding-left: 8px
+    }
+
+    .people-list .status {
+        color: #999;
+        font-size: 13px
+    }
+
+    .chat .chat-header {
+        padding: 15px 20px;
+        border-bottom: 2px solid #f4f7f6
+    }
+
+    .chat .chat-header img {
+        float: left;
+        border-radius: 40px;
+        width: 40px
+    }
+
+    .chat .chat-header .chat-about {
+        float: left;
+        padding-left: 10px
+    }
+
+    .chat .chat-history {
+        padding: 20px;
+        border-bottom: 2px solid #fff;
+        height: 483px;
+        overflow-y: auto;
+    }
+
+    .chat .chat-history ul {
+        padding: 0
+    }
+
+    .chat .chat-history ul li {
+        list-style: none;
+        margin-bottom: 30px
+    }
+
+    .chat .chat-history ul li:last-child {
+        margin-bottom: 0px
+    }
+
+    .chat .chat-history .message-data {
+        margin-bottom: 15px
+    }
+
+    .chat .chat-history .message-data img {
+        border-radius: 40px;
+        width: 40px
+    }
+
+    .chat .chat-history .message-data-time {
+        color: #434651;
+        padding-left: 6px
+    }
+
+    .chat .chat-history .message {
+        color: #444;
+        padding: 18px 20px;
+        line-height: 26px;
+        font-size: 16px;
+        border-radius: 7px;
+        display: inline-block;
+        position: relative
+    }
+
+    .chat .chat-history .message:after {
+        bottom: 100%;
+        left: 7%;
+        border: solid transparent;
+        content: " ";
+        height: 0;
+        width: 0;
+        position: absolute;
+        pointer-events: none;
+        border-bottom-color: #fff;
+        border-width: 10px;
+        margin-left: -10px
+    }
+
+    .chat .chat-history .my-message {
+        background: #efefef
+    }
+
+    .chat .chat-history .my-message:after {
+        display: none;
+        bottom: 100%;
+        left: 30px;
+        border: solid transparent;
+        content: " ";
+        height: 0;
+        width: 0;
+        position: absolute;
+        pointer-events: none;
+        border-bottom-color: #efefef;
+        border-width: 10px;
+        margin-left: -10px
+    }
+
+    .chat .chat-history .other-message {
+        background: #e8f1f3;
+        text-align: right
+    }
+
+    .chat .chat-history .other-message:after {
+        border-bottom-color: #e8f1f3;
+        left: 79%;
+        display: none;
+    }
+
+    .chat .chat-message {
+        padding: 20px
+    }
+
+    .online,
+    .offline,
+    .me {
+        margin-right: 2px;
+        font-size: 8px;
+        vertical-align: middle
+    }
+
+    .online {
+        color: #86c541
+    }
+
+    .offline {
+        color: #e47297
+    }
+
+    .me {
+        color: #1d8ecd
+    }
+
+    .float-right {
+        float: right
+    }
+
+    .clearfix:after {
+        visibility: hidden;
+        display: block;
+        font-size: 0;
+        content: " ";
+        clear: both;
+        height: 0
+    }
+
+    #plist {
+        height: 641px;
+        overflow-y: scroll;
+    }
+
+    .custominput-group-text {
+        padding: 10px 12px;
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+
+    @media only screen and (max-width: 767px) {
+        .chat-app .people-list {
+            height: 465px;
+            width: 100%;
+            overflow-x: auto;
+            background: #fff;
+            left: -400px;
+            display: none
+        }
+
+        .chat-app .people-list.open {
+            left: 0
+        }
+
+        .chat-app .chat {
+            margin: 0
+        }
+
+        .chat-app .chat .chat-header {
+            border-radius: 0.55rem 0.55rem 0 0
+        }
+
+        .chat-app .chat-history {
+            height: 300px;
+            overflow-x: auto
+        }
+    }
+
+    @media only screen and (min-width: 768px) and (max-width: 992px) {
+        .chat-app .chat-list {
+            height: 650px;
+            overflow-x: auto
+        }
+
+        .chat-app .chat-history {
+            height: 600px;
+            overflow-x: auto
+        }
+    }
+
+    @media only screen and (min-device-width: 768px) and (max-device-width: 1024px) and (orientation: landscape) and (-webkit-min-device-pixel-ratio: 1) {
+        .chat-app .chat-list {
+            height: 480px;
+            overflow-x: auto
+        }
+
+        .chat-app .chat-history {
+            height: calc(100vh - 350px);
+            overflow-x: auto
+        }
+    }
+</style>
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">聊天</h1>
+</div>
+
+<div class="container">
+    <div class="row clearfix">
+        <div class="col-lg-12">
+            <div class="card chat-app">
+                <div id="plist" class="people-list">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text custominput-group-text"><i class="fa fa-search"></i></span>
+                        </div>
+                        <input type="text" class="form-control" id="searchBox" placeholder="搜索玩家ID...">
+                    </div>
+                    <ul class="list-unstyled chat-list mt-2 mb-0" id="playersListing">
+
+                    </ul>
+                </div>
+                <div class="chat">
+                    <div class="chat-header clearfix">
+                        <div class="row">
+                            <div class="col-lg-6">
+
+                                <img src="https://bootdey.com/img/Content/avatar/avatar2.png" alt="avatar">
+
+                                <div class="chat-about">
+                                    <h6 class="m-b-0" id="selectedPlayerName"></h6>
+                                    <small id="selectedPlayerUid"></small>
+                                </div>
+                            </div>
+                            <!--
+                            <div class="col-lg-6 hidden-sm text-right">
+                                <a href="javascript:void(0);" class="btn btn-outline-secondary"><i
+                                        class="fa fa-camera"></i></a>
+                                <a href="javascript:void(0);" class="btn btn-outline-primary"><i
+                                        class="fa fa-image"></i></a>
+                                <a href="javascript:void(0);" class="btn btn-outline-info"><i
+                                        class="fa fa-cogs"></i></a>
+                                <a href="javascript:void(0);" class="btn btn-outline-warning"><i
+                                        class="fa fa-question"></i></a>
+                            </div>
+                            -->
+                        </div>
+                    </div>
+                    <div class="chat-history" id="chat-historyWrapper">
+                        <ul id="chat_message_listing" class="m-b-0">
+
+                        </ul>
+                    </div>
+                    <div class="chat-message clearfix">
+                        <div class="input-group mb-0">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text custominput-group-text"><i class="fa fa-send"></i></span>
+                            </div>
+                            <input id="messageBox" type="text" class="form-control" placeholder="输入内容...">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

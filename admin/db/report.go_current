@@ -1,0 +1,241 @@
+package db
+
+import (
+	"admin/helper"
+	"fmt"
+)
+
+func GetTopupReport(searchParams map[string]string) []map[string]string {
+
+	//offset := (helper.StringToInt(pagenumber) -1) * helper.RECORDS_PER_PAGE
+
+	isFirstQuery := "SELECT COUNT(*) FROM `order` o " +
+		"WHERE o.`uid`=`user`.`uid` AND o.`updated_datetime` < `order`.`updated_datetime` " +
+		"AND o.`order_status` = 'đã thanh toán' LIMIT 1"
+	queryStr := "SELECT "
+
+	queryStr += "`user`.`uid`, "               // uid
+	queryStr += "`user`.`create_at`, "         // 注册时间
+	queryStr += "`order`.`updated_datetime`, " // 充值时间
+	queryStr += "`order`.`payment_amount`, "   // 充值金额
+	queryStr += "`order`.`game_coin_amount`, " // 充值数量
+	queryStr += "CASE `order`.`order_status` "
+	queryStr += "WHEN 'tật nguyền' then '订单失效' "
+	queryStr += "WHEN 'Chế biến' then '待付款' "
+	queryStr += "WHEN 'đã thanh toán' then '已付款' "
+	queryStr += "END as order_status, "
+	queryStr += "IF("
+	queryStr += "(" // 是否首充
+	queryStr += isFirstQuery
+	queryStr += ")"
+	queryStr += " = 0 AND `order`.`order_status` = 'đã thanh toán', \"是\", \"否\") as 'isFirst' "
+
+	queryStr += "FROM `order` JOIN `user` ON `user`.uid = `order`.uid "
+	queryStr += "WHERE "
+
+	if searchParams["dateStart"] != "" && searchParams["dateEnd"] != "" {
+		queryStr += "`user`.`create_at` BETWEEN '" + searchParams["dateStart"] + "' AND '" + searchParams["dateEnd"] + "' "
+		queryStr += "AND `order`.`updated_datetime` BETWEEN '" + searchParams["dateStart"] + "' AND '" + searchParams["dateEnd"] + "' "
+	} else {
+		queryStr += "DATE(`user`.`create_at`) = DATE('" + helper.GetCurrentShanghaiTimeString() + "') "
+	}
+	if searchParams["uid"] != "" {
+		queryStr += "AND `order`.`uid` = '" + searchParams["uid"] + "' "
+	}
+
+	if searchParams["topupReportType"] != "" {
+		if searchParams["topupReportType"] == TopUpReportIsFirst {
+			queryStr += "AND (" + isFirstQuery + ") = 0 AND `order`.`order_status` = 'đã thanh toán' "
+		} else if searchParams["topupReportType"] == TopUpReportIsNotFirst {
+			queryStr += "AND (" + isFirstQuery + ") > 0 AND `order`.`order_status` = 'đã thanh toán' "
+		}
+	}
+	queryStr += "ORDER BY `user`.`create_at` DESC "
+
+	reports, err := db.QueryString(queryStr)
+	if err != nil {
+		logger.Printf(queryStr)
+		logger.Error(err)
+	}
+
+	// logger.Printf("reports: %v", reports)
+
+	if len(reports) > 0 {
+		return reports
+	}
+
+	return nil
+}
+
+func GetStatReport(searchParams map[string]string) []map[string]string {
+
+	queryStr := "SELECT r.*, (haochehui_tax + pinshi_tax) as 'total_tax', "
+
+	queryStr += fmt.Sprintf("(SELECT COALESCE(SUM(`game_coin`), '未统计') as sum_results FROM `total_game_coin` " +
+		"WHERE DATE(`create_at`) = r.create_at) as 'totalPlayerGamecoin' ")
+
+	queryStr += "FROM `report` r "
+
+	queryStr += "WHERE "
+
+	if searchParams["dateStart"] != "" && searchParams["dateEnd"] != "" {
+		queryStr += "r.create_at >= DATE('" + searchParams["dateStart"] + "') "
+		queryStr += "AND r.create_at <= DATE('" + searchParams["dateEnd"] + "') "
+	} else {
+		queryStr += "r.create_at = DATE('" + helper.GetCurrentShanghaiTimeString() + "') "
+	}
+	queryStr += "ORDER BY r.create_at DESC"
+
+	reports, err := db.QueryString(queryStr)
+	logger.Println("queryStr of report")
+	logger.Println(queryStr)
+
+	if err != nil {
+		logger.Printf(queryStr)
+		logger.Error(err)
+	}
+
+	if len(reports) > 0 {
+		//for _, v := range reports {
+		//	if v["game_coin"] == "" {
+		//		v["totalPlayerGamecoin"] = "未统计"
+		//	}
+		//}
+		//return reports, games
+		return reports
+	}
+	//return nil, nil
+	return nil
+	// logger.Printf("queryStr: %v", queryStr)
+}
+
+func GetCurrentReport() []map[string]string {
+
+	queryStr := "SELECT " +
+		"(SELECT COUNT(*) as num_results FROM log_information WHERE reason = '注册奖励' AND DATE(operating_time) = dates.date1 LIMIT 1) as register_num, " +
+		"(SELECT COUNT(*) as num_results FROM log_information WHERE reason = '登陆' AND DATE(operating_time) = dates.date1 LIMIT 1) as login_num, " +
+		"(SELECT COALESCE(SUM(payment_amount), 0) as sum_results FROM gamespace.order WHERE order_status = 'đã thanh toán' AND DATE(updated_datetime) = dates.date1 LIMIT 1) as total_payment_amount, " +
+		"(SELECT COALESCE(SUM(bet_total), 0) as sum_results FROM log_information WHERE uid > 0 AND game != '' AND DATE(operating_time) = dates.date1 LIMIT 1) as total_bet, " +
+		"(SELECT COUNT(*) as sum_results FROM log_information WHERE uid > 0 AND game != '' AND DATE(operating_time) = dates.date1 LIMIT 1) as bet_num, " +
+		"(SELECT COALESCE(SUM(used), 0) as sum_results FROM log_information WHERE uid > 0 AND game != '' AND DATE(operating_time) = dates.date1 LIMIT 1) as total_win_lose " +
+		"FROM(  " +
+		"SELECT DISTINCT DATE(updated_datetime) as date1 " +
+		"FROM gamespace.order " +
+		"UNION " +
+		"SELECT DISTINCT DATE(operating_time) as date1 " +
+		"FROM gamespace.log_information " +
+		") dates  " +
+		"WHERE dates.date1 = DATE(curdate() - INTERVAL 0 DAY) "
+
+	current_reports, err := db.QueryString(queryStr)
+	//logger.Printf(queryStr)
+	if err != nil {
+		//logger.Printf(queryStr)
+		logger.Error(err)
+	}
+
+	if len(current_reports) > 0 {
+		return current_reports
+	}
+	return nil
+}
+
+func GetCurrentActive() []map[string]string {
+	queryStr := "SELECT CASE WHEN COUNT(distinct li.uid) = '' THEN '0' " +
+		"ELSE COUNT(distinct li.uid) END as 'active_num' " +
+		"FROM `user` u " +
+		"LEFT JOIN `game_coin_locker` ON u.`uid` = `game_coin_locker`.`uid` " +
+		"LEFT JOIN `log_information` li ON u.`uid` = li.`uid` AND li.`game`<>'' " +
+		"LEFT JOIN `order` o ON o.`uid` = u.`uid` AND o.`order_status` = '已付款'  " +
+		"WHERE 1=1 AND " +
+		"u.`user_permission` != 'super_admin' AND " +
+		"DATE(create_at) = DATE(curdate())  " +
+		"ORDER BY u.`create_at` DESC "
+
+	current_active, err := db.QueryString(queryStr)
+	//logger.Printf(queryStr)
+	if err != nil {
+		//logger.Printf(queryStr)
+		logger.Error(err)
+	}
+
+	if len(current_active) > 0 {
+		return current_active
+	}
+	return nil
+}
+
+func GetCurrentReportPinshiOnline() []map[string]string {
+	queryStr := "SELECT CASE WHEN COUNT(DISTINCT uid) = '' THEN '0' ELSE COUNT(DISTINCT uid) END as pinshi_online " +
+		"FROM gamespace.log_information WHERE uid > 0 AND game = '拼十' AND operating_time >= now() - INTERVAL 1 HOUR - INTERVAL 1 MINUTE "
+	current_pinshi, err := db.QueryString(queryStr)
+	//logger.Printf(queryStr)
+	if err != nil {
+		//logger.Printf(queryStr)
+		logger.Error(err)
+	}
+
+	if len(current_pinshi) > 0 {
+		return current_pinshi
+	}
+	return nil
+}
+
+func GetCurrentReportRouletteOnline() []map[string]string {
+	queryStr2 := "SELECT CASE WHEN COUNT(DISTINCT uid) = '' THEN '0' ELSE COUNT(DISTINCT uid) END as roulette_online " +
+		"FROM gamespace.log_information WHERE uid > 0 AND game = '动物乐园' AND operating_time >= now() - INTERVAL 1 HOUR - INTERVAL 1 MINUTE "
+	current_roulette, err2 := db.QueryString(queryStr2)
+	//logger.Printf(queryStr2)
+	if err2 != nil {
+		//logger.Printf(queryStr2)
+		logger.Error(err2)
+	}
+
+	if len(current_roulette) > 0 {
+		return current_roulette
+	}
+	return nil
+}
+
+func GetCurrentReportHaochehuiOnline() []map[string]string {
+	queryStr3 := "SELECT CASE WHEN COUNT(DISTINCT uid) = '' THEN '0' ELSE COUNT(DISTINCT uid) END as haochehui_online " +
+		"FROM gamespace.log_information WHERE uid > 0 AND game = '豪车汇' AND operating_time >= now() - INTERVAL 1 HOUR - INTERVAL 1 MINUTE "
+	current_haochehui, err3 := db.QueryString(queryStr3)
+	//logger.Printf(queryStr3)
+	if err3 != nil {
+		//logger.Printf(queryStr3)
+		logger.Error(err3)
+	}
+
+	if len(current_haochehui) > 0 {
+		return current_haochehui
+	}
+	return nil
+}
+
+func GetCurrentReportFruitOnline() []map[string]string {
+	queryStr4 := "SELECT CASE WHEN COUNT(DISTINCT uid) = '' THEN '0' ELSE COUNT(DISTINCT uid) END as fruit_online " +
+		"FROM gamespace.log_information WHERE uid > 0 AND game = '水果' AND operating_time >= now() - INTERVAL 1 HOUR - INTERVAL 1 MINUTE "
+	current_fruit, err4 := db.QueryString(queryStr4)
+	//logger.Printf(queryStr4)
+	if err4 != nil {
+		//logger.Printf(queryStr4)
+		logger.Error(err4)
+	}
+	if len(current_fruit) > 0 {
+		return current_fruit
+	}
+	return nil
+}
+
+const (
+	TopUpReportIsFirst    string = "是"
+	TopUpReportIsNotFirst string = "否"
+)
+
+var TopupReportTypes = []map[string]interface{}{
+	//{"val": "", "text": "全部"},
+	{"val": TopUpReportIsFirst, "text": "首充"},
+	{"val": TopUpReportIsNotFirst, "text": "非首充"},
+	{"val": "", "text": "全部"},
+}

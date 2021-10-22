@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="Singcloud Pte Ltd">
+    <title>{{if .title}}{{ .title }}{{else}}后台{{end}}</title>
+    <link href="/assets/bootstrap/bootstrap.min.css" rel="stylesheet">
+
+    {{if .isLoggedIn}}
+    <link rel="stylesheet" href="/assets/dashboard.css">{{end}}
+    {{if .isAdminLoggedIn}}
+    <link rel="stylesheet" href="/assets/dashboard.css">{{end}}
+    <link rel="stylesheet" href="/assets/css/bootstrap-datetimepicker.css">
+    <link rel="stylesheet" href="/assets/style.css">
+    <meta name="theme-color" content="#7952b3">
+    <script src="/assets/js/jquery-2.1.1.min.js"></script>
+    <script src="/assets/js/moment-with-locales.min.js"></script>
+    <script src="/assets/bootstrap/bootstrap.bundle.min.js"></script>
+    <script src="/assets/js/bootstrap-datetimepicker.min.js"></script>
+
+</head>
+
+<body>
+    {{if .isLoggedIn}}{{render "layout/header.html"}}{{end}}
+    {{if .isAdminLoggedIn}}{{render "layout/headeradmin.html"}}{{end}}
+    {{if .tempMessage}}
+    <div class="container">
+        <div class="alert alert-primary alert-dismissible fade show mt-3" role="alert">
+            {{ .tempMessage }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    </div>
+    {{end}}
+
+    {{if .tempFailMessage}}
+    <div class="container">
+        <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+            {{ .tempFailMessage }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    </div>
+    {{end}}
+    {{ yield }}
+
+    {{if .isLoggedIn}}{{render "layout/footer.html"}}{{end}}
+    {{if .isAdminLoggedIn}}{{render "layout/footer.html"}}{{end}}
+</body>
+
+</html>

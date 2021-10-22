@@ -1,0 +1,12 @@
+<form method="{{.Method}}" {{if .Action}}action="{{.Action}}" {{end}}>
+    {{range .Fields}}
+    <div class="mb-3">
+        {{if .IsText}}{{input_text . }}{{end}}
+        {{if .IsReadOnly}}{{input_readonly . }}{{end}}
+        {{if .IsPassword}}{{input_password . }}{{end}}
+        {{if .IsSelect}}{{input_select . }}{{end}}
+    </div>
+    {{end}}
+    <button type="submit" class="btn btn-primary mb-3">确认</button>
+
+</form>

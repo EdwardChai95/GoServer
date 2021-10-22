@@ -1,0 +1,18 @@
+<label for="{{.Name}}" class="form-label">{{.Title}}</label>
+<div class='input-group date'>
+    <input type='text' class="form-control" name="{{.Name}}" id='{{.Name}}' value="{{.Value}}" />
+    <span class="input-group-addon">
+        <span class="glyphicon glyphicon-calendar"></span>
+    </span>
+</div>
+{{if .Help}}
+<div id="{{.Name}}Help" class="form-text">{{.Help}}</div>
+{{end}}
+
+<script type="text/javascript">
+    $(function () {
+        $('#{{.Name}}').datetimepicker({
+            format: 'YYYY-MM-DD HH:mm'
+        });
+    });
+</script>

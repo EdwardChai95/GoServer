@@ -1,0 +1,138 @@
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">礼包码统计</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <!-- SPACE -->
+    </div>
+</div>
+
+<script type="text/javascript">
+    function tableToExcel(tableid, filename = '') {
+        var downloadLink;
+        var dataType = 'application/vnd.ms-excel';
+        var tableSelect = document.getElementById(tableid);
+        var tableHTML = tableSelect.outerHTML.replace(/ /g, '%20');
+        console.log(tableid);
+        // Specify file name
+        filename = filename?filename+'.xls':'excel_data.xls';
+        console.log(filename);
+        // Create download link element
+        downloadLink = document.createElement("a");
+        console.log(downloadLink);
+        document.body.appendChild(downloadLink);
+
+        if(navigator.msSaveOrOpenBlob){
+                console.log("aaa");
+            var blob = new Blob(['\ufeff', tableHTML], {
+                type: dataType
+            });
+            navigator.msSaveOrOpenBlob( blob, filename);
+        }else{
+            // Create a link to the file
+            downloadLink.href = 'data:' + dataType + ', ' + tableHTML;
+            console.log(downloadLink.href);
+            // Setting the file name
+            downloadLink.download = filename;
+
+            //triggering the function
+            downloadLink.click();
+        }
+    }
+</script>
+
+<!--
+<div class="mb-3">
+    <a class="btn btn-success" data-bs-toggle="collapse" href="#collapseSearch" role="button" aria-expanded="false"
+        aria-controls="collapseSearch">
+        查询
+    </a>
+</div>
+
+<div class="card collapse mb-3" id="collapseSearch">
+    <div class="card-body">-->
+        <form method="GET">
+            <div class="row mb-2">
+                <div class="col">
+                    {{input_text .exchange_code }}
+                </div>
+                <div class="col">
+                    {{input_text .uid }}
+                </div>
+            </div>
+
+	    <div class="row">
+                <div class="col">
+                    {{input_date .dateStart }}
+                </div>
+                <div class="col">
+                    {{input_date .dateEnd }}
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary mt-3">查询</button>
+	    <button onclick="tableToExcel('exchangecodeToExport','礼包码统计')" class="btn btn-primary mt-3">导出</button>
+        </form>
+  <!--  </div>
+</div>-->
+
+<table id="log" class="table">
+    <thead style="white-space: nowrap;">
+        <tr>
+            <th>礼包码号码</th>
+            <th>玩家ID</th>
+            <th>游戏币数量</th>
+	    <th>喇叭数量</th>
+            <th>使用时间</th>
+            <th>礼包码已使用次数</th>
+            <th>礼包码总使用次数</th>
+            <th>有效时间</th>
+        </tr>
+
+    </thead>
+    <tbody>
+        {{range .Exchangecodes}}
+        <tr>
+            <td>{{.exchange_code}}</td>
+            <td>{{.uid}}</td>
+            <td>{{.game_coin}}</td>
+	    <td>{{.la_ba}}</td>
+	    <td>{{.operating_time}}</td>
+            <td>{{.is_used}}</td>
+            <td>{{.max_usage}}</td>
+            <td>{{.valid_until_time}}</td>
+        </tr>
+        {{end}}
+    </tbody>
+</table>
+
+
+{{.pagination}}
+
+<table id="exchangecodeToExport" class="table" style="display:none">
+    <thead style="white-space: nowrap;">
+        <tr>
+            <th>礼包码号码</th>
+            <th>玩家ID</th>
+            <th>游戏币数量</th>
+	    <th>喇叭数量</th>
+            <th>使用时间</th>
+            <th>礼包码已使用次数</th>
+            <th>礼包码总使用次数</th>
+            <th>有效时间</th>
+        </tr>
+
+    </thead>
+    <tbody>
+        {{range .ExchangecodesToExport}}
+        <tr>
+            <td>{{.exchange_code}}</td>
+            <td>{{.uid}}</td>
+            <td>{{.game_coin}}</td>
+	    <td>{{.la_ba}}</td>
+            <td>{{.operating_time}}</td>
+            <td>{{.is_used}}</td>
+            <td>{{.max_usage}}</td>
+            <td>{{.valid_until_time}}</td>
+        </tr>
+        {{end}}
+    </tbody>
+</table>

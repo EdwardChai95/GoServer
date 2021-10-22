@@ -1,0 +1,222 @@
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">用户数据统计</h1>
+</div>
+<script type="text/javascript">
+    function tableToExcel(tableid, filename = '') {
+        var downloadLink;
+        var dataType = 'application/vnd.ms-excel';
+        var tableSelect = document.getElementById(tableid);
+        var tableHTML = tableSelect.outerHTML.replace(/ /g, '%20');
+        console.log(tableid);
+        // Specify file name
+        filename = filename?filename+'.xls':'excel_data.xls';
+        console.log(filename);
+        // Create download link element
+        downloadLink = document.createElement("a");
+        console.log(downloadLink);
+        document.body.appendChild(downloadLink);
+
+        if(navigator.msSaveOrOpenBlob){
+                console.log("aaa");
+            var blob = new Blob(['\ufeff', tableHTML], {
+                type: dataType
+            });
+            navigator.msSaveOrOpenBlob( blob, filename);
+        }else{
+            // Create a link to the file
+            downloadLink.href = 'data:' + dataType + ', ' + tableHTML;
+            console.log(downloadLink.href);
+            // Setting the file name
+            downloadLink.download = filename;
+
+            //triggering the function
+            downloadLink.click();
+        }
+    }
+</script>
+<style type="text/css" mce_bogus="1">  
+    table th{
+              white-space: nowrap;
+          }
+          table td{
+              white-space: nowrap;
+          }
+    table{
+           empty-cells:show; 
+           border-collapse: collapse;
+           margin:0 auto;
+          }
+</style>
+<form method="GET">
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row mb-2">
+                <div class="col">
+                    {{input_date .dateStart }}
+                </div>
+                <div class="col">
+                    {{input_date .dateEnd }}
+                </div>
+            </div>
+
+            <!-- <div class="row mb-2">
+                <div class="col">
+                    {{input_select .order_status }}
+                </div>
+            </div> -->
+
+            <button type="submit" class="btn btn-primary mt-3">查询</button>
+	    <button onclick="tableToExcel('report','用户数据统计')" class="btn btn-primary mt-3">导出</button>
+        </div>
+    </div>
+
+<div class="card mb-4">
+    <div class="card-body">
+    <div style="overflow: auto;width: 100%;">
+        <table id="current_report" class="table table-bordered" style="width:100%">
+            <thead>
+                <tr style="text-align:center">
+		    {{range $h := index .current_report_header}}
+                    	<th>{{$h}}</th>
+                    {{end}}
+
+                </tr>
+
+            </thead>
+            <tbody>
+                <tr>
+		{{range .current_reports2}}
+			<td>{{.login_num}}</td>
+		{{end}}
+		{{range .current_reports1}}
+			<td>{{.register_num}}</td>
+		{{end}}
+		{{range .current_active_num}}
+                
+                    {{range $data := index .}}
+                    <td>{{$data}}</td>
+                    {{end}}
+                
+                {{end}}
+		{{range .current_reports3}}
+                        <td>{{.total_payment_amount}}</td>
+		{{end}}
+		{{range .current_reports4}}
+                        <td>{{.total_bet}}</td>
+		{{end}}
+		{{range .current_reports5}}
+                        <td>{{.bet_num}}</td>
+		{{end}}
+		{{range .current_reports6}}
+                        <td>{{.total_win_lose}}</td>
+		{{end}}
+		{{range .current_pinshi}}
+                        <td>{{.pinshi_online}}</td>
+                {{end}}
+                {{range .current_roulette}}
+                        <td>{{.roulette_online}}</td>
+                {{end}}
+                {{range .current_haochehui}}
+                        <td>{{.haochehui_online}}</td>
+                {{end}}
+                {{range .current_fruit}}
+                        <td>{{.fruit_online}}</td>
+                {{end}}
+		</tr>
+            </tbody>
+        </table>
+	<button onclick="refreshData()" class="btn btn-primary mt-3">更新</button>
+    </div>
+    </div>
+</div>
+	<script>
+		function refreshData() {
+			location.reload()
+		}
+	</script>
+
+
+    <table class="table table-bordered mb-4">
+        <tr>
+            <th scope="row">当前在线人数：</th>
+	    <td><span id ="totalOnlinePlayers">0</span></td>
+        </tr>
+    </table>
+
+    <div style="overflow: auto;width: 100%;">
+        <table id="report" class="table table-bordered">
+            <thead>
+                <tr>
+                    {{range $h := index .report_header}}
+                    <th>{{$h}}</th>
+                    {{end}}
+                </tr>
+            </thead>
+            <tbody>
+		{{range .report_data}}
+		<tr>
+                    {{range $data := index .}}
+                    <td>{{$data}}</td>
+                    {{end}}
+                </tr>
+		{{end}}
+            </tbody>
+        </table>
+    </div>
+
+</form>
+
+<script src="/assets/js/protocol.js"></script>
+<script src="/assets/js/nano-websocket-client.js"></script>
+
+<script>
+    var sock = new WebSocket("{{.wsurl}}")
+    console.log(sock)
+    console.log("attempting websocket connection");
+
+    sock.onopen = function () {
+        var data = {
+            Type: "init", Data: {
+                username: "管理员",
+                faceUri: "1",
+                level: "1",
+                jwt: "{{.jwt}}",
+            }
+        }
+        this.send(JSON.stringify(data));
+    }.bind(sock)
+
+
+    sock.onmessage = function (obj) {
+        if (isJsonStr(obj.data)) {
+            var data = JSON.parse(obj.data);
+            if (data.code == "err") { // kick out !
+                return
+            }
+
+            // console.log(data)
+            if (data.type == "lobbyUpdateOnlinePlayers") {
+                $('#totalOnlinePlayers').html((data.lobbyClientsToShow).length)
+            }
+        }
+    }.bind(sock)
+
+    function isJsonStr(item) {
+        item = typeof item !== "string"
+            ? JSON.stringify(item)
+            : item;
+
+        try {
+            item = JSON.parse(item);
+        } catch (e) {
+            return false;
+        }
+
+        if (typeof item === "object" && item !== null) {
+            return true;
+        }
+
+        return false;
+    }
+
+</script>

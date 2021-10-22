@@ -1,0 +1,10 @@
+<div class="row">
+    <label for="{{.Name}}" class="col-form-label col-sm-3">{{.Title}}</label>
+    <div class="col-sm-9">
+        <input type="text" class="form-control-plaintext" readonly {{if .Help}} aria-describedby="{{.Name}}Help" {{end}}
+            value="{{.Value}}">
+        {{if .Help}}
+        <div id="{{.Name}}Help" class="form-text">{{.Help}}</div>
+        {{end}}
+    </div>
+</div>
