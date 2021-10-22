@@ -1,0 +1,148 @@
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">支付记录</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        找到 {{.Total}} 条结果
+    </div>
+</div>
+
+<script type="text/javascript">
+    function tableToExcel(tableid, filename = '') {
+        var downloadLink;
+        var dataType = 'application/vnd.ms-excel';
+        var tableSelect = document.getElementById(tableid);
+        var tableHTML = tableSelect.outerHTML.replace(/ /g, '%20');
+ 	console.log(tableid);	
+        // Specify file name
+        filename = filename?filename+'.xls':'excel_data.xls';
+	console.log(filename);
+        // Create download link element
+        downloadLink = document.createElement("a");
+	console.log(downloadLink);
+        document.body.appendChild(downloadLink);
+
+        if(navigator.msSaveOrOpenBlob){
+		console.log("aaa");
+            var blob = new Blob(['\ufeff', tableHTML], {
+                type: dataType
+            });
+            navigator.msSaveOrOpenBlob( blob, filename);
+        }else{
+            // Create a link to the file
+            downloadLink.href = 'data:' + dataType + ', ' + tableHTML;
+	    console.log(downloadLink.href);
+            // Setting the file name
+            downloadLink.download = filename;
+
+            //triggering the function
+            downloadLink.click();
+        }
+    }
+</script>
+<!--
+<div class="mb-3">
+    <a class="btn btn-success" data-bs-toggle="collapse" href="#collapseSearch" role="button" aria-expanded="false"
+        aria-controls="collapseSearch">
+        查询
+    </a>
+</div>
+
+<div class="card collapse mb-3" id="collapseSearch">
+    <div class="card-body">-->
+        <form method="GET">
+            <div class="row mb-2">
+                <div class="col">
+                    {{input_text .order_id }}
+                </div>
+                <div class="col">
+                    {{input_text .uid }}
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col">
+                    {{input_select .order_status }}
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary mt-3">查询</button>
+	    <button onclick="tableToExcel('order','支付记录')" class="btn btn-primary mt-3">导出</button>
+        </form>
+   <!-- </div>
+</div>-->
+
+<div class="table-responsive">
+    <table class="table table-striped table-sm">
+        <thead style="white-space: nowrap;">
+            <tr>
+                <th>订单号</th>
+                <th>UID</th>
+                <th>充值金额</th>
+                <th>游戏币金额</th>
+                <th>支付状态</th>
+                <th>备注</th>
+                <th>支付类型</th>
+                <th>创建时间</th>
+                <th>最近更新时间</th>
+                <!-- <th>操作</th> -->
+            </tr>
+        </thead>
+        <tbody>
+            {{range .Orders}}
+            <!-- map[callback_data: comment: created_datetime:2021-04-16 14:41:20 
+                game_coin_amount:100000 
+                order_id:34 order_status:订单失效 payment_amount:100000 
+                rebate: type:vc uid:1610696902124 updated_datetime:2021-04-16 14:41:20]  -->
+            <tr>
+                <td>{{.order_id}}</td>
+                <td>{{.uid}}</td>
+                <td>{{.payment_amount}}</td>
+                <td>{{.game_coin_amount}}</td>
+                <td>{{.order_status}}</td>
+                <td>{{.comment}}</td>
+                <td>{{.type}}</td>
+                <td>{{.created_datetime}}</td>
+                <td>{{.updated_datetime}}</td>
+                <!-- <td><a class="btn btn-sm btn-primary" style="white-space: nowrap;"
+                        href="/user/edit/?uid={{.uid}}">修改</a></a></td> -->
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>
+{{.pagination}}
+
+    <table id="order" class="table table-striped table-sm" style="display:none">
+        <thead style="white-space: nowrap;">
+            <tr>
+                <th>订单号</th>
+                <th>UID</th>
+                <th>充值金额</th>
+                <th>游戏币金额</th>
+                <th>支付状态</th>
+                <th>备注</th>
+                <th>创建时间</th>
+                <th>最近更新时间</th>
+                <!-- <th>操作</th> -->
+            </tr>
+        </thead>
+        <tbody>
+            {{range .OrdersToExport}}
+            <!-- map[callback_data: comment: created_datetime:2021-04-16 14:41:20
+                game_coin_amount:100000
+                order_id:34 order_status:订单失效 payment_amount:100000
+                rebate: type:vc uid:1610696902124 updated_datetime:2021-04-16 14:41:20]  -->
+            <tr>
+                <td>{{.order_id}}</td>
+                <td>{{.uid}}</td>
+                <td>{{.payment_amount}}</td>
+                <td>{{.game_coin_amount}}</td>
+                <td>{{.order_status}}</td>
+                <td>{{.comment}}</td>
+                <td>{{.created_datetime}}</td>
+                <td>{{.updated_datetime}}</td>
+                <!-- <td><a class="btn btn-sm btn-primary" style="white-space: nowrap;"
+                        href="/user/edit/?uid={{.uid}}">修改</a></a></td> -->
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+

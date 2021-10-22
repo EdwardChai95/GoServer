@@ -1,0 +1,95 @@
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">游戏账变</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <!-- SPACE -->
+    </div>
+</div>
+<div class="mb-3">
+    <a class="btn btn-success" data-bs-toggle="collapse" href="#collapseSearch" role="button" aria-expanded="false"
+        aria-controls="collapseSearch">
+        查询
+    </a>
+</div>
+
+<div class="card collapse mb-3" id="collapseSearch">
+    <div class="card-body">
+        <form method="GET">
+            <div class="row mb-2">
+                <div class="col">
+                    {{input_text .uid }}
+                </div>
+                <div class="col">
+                    {{input_select .reason }}
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col">
+                    {{input_select .game }}
+                </div>
+                <div class="col">
+                    {{input_select .level }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    {{input_text .params }}
+                </div>
+                <div class="col">
+                    {{input_text .otherTerm }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    {{input_date .dateStart }}
+                </div>
+                <div class="col">
+                    {{input_date .dateEnd }}
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary mt-3">查询</button>
+        </form>
+    </div>
+</div>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>账变ID</th>
+            <th>玩家ID</th>
+            <th>游戏名称</th>
+            <th>游戏场次</th>
+            <th>操作原因</th>
+	    <th>操作前金额</th>
+	    <th>操作金额</th>
+	    <th>操作后金额</th>
+            <th>其他参数</th>
+            <th>操作时间</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{range .Logs}}
+        <tr>
+            <td>{{.log_information_id}}</td>
+            <td>{{.uid}}</td>
+            <td>{{.game}}</td>
+            <td>{{.level}}</td>
+            <td>{{.reason}}</td>
+            <!--special-->
+            <td>{{if .before}}{{.before}}{{end}}</td>
+            <td>{{if .used}}{{.used}}{{end}}</td>
+            <td>{{if .after}}{{.after}}{{end}}</td>
+            <td>{{.other_info}}{{if .other_info1}}{{.other_info1}}{{end}}</td>
+            <!-- <td>{{if .other_info2}}{{.other_info2}}{{end}}</td>
+            <td>{{if .other_info3}}{{.other_info3}}{{end}}</td>
+            <td>{{if .other_info4}}{{.other_info4}}{{end}}</td>
+            <td>{{if .other_info5}}{{.other_info5}}{{end}}</td> -->
+            <!--special-->
+            <td>{{.operating_time}}</td>
+        </tr>
+        {{end}}
+    </tbody>
+</table>
+
+
+{{.pagination}}

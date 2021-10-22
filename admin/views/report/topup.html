@@ -1,0 +1,82 @@
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">新用户充值统计</h1>
+</div>
+
+<script type="text/javascript">
+    function tableToExcel(tableid, filename = '') {
+	var downloadLink;
+    	var dataType = 'application/vnd.ms-excel';
+   	var tableSelect = document.getElementById(tableid);
+    	var tableHTML = tableSelect.outerHTML.replace(/ /g, '%20');
+    
+    	// Specify file name
+    	filename = filename?filename+'.xls':'excel_data.xls';
+    
+    	// Create download link element
+    	downloadLink = document.createElement("a");
+    
+    	document.body.appendChild(downloadLink);
+    
+    	if(navigator.msSaveOrOpenBlob){
+            var blob = new Blob(['\ufeff', tableHTML], {
+            	type: dataType
+            });
+            navigator.msSaveOrOpenBlob( blob, filename);
+    	}else{
+            // Create a link to the file
+            downloadLink.href = 'data:' + dataType + ', ' + tableHTML;
+    
+            // Setting the file name
+            downloadLink.download = filename;
+        
+            //triggering the function
+            downloadLink.click();
+    	}
+    }
+</script>
+
+<form method="GET">
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row mb-2">
+                <div class="col">
+                    {{input_date .dateStart }}
+                </div>
+                <div class="col">
+                    {{input_date .dateEnd }}
+                </div>
+            </div>
+	    <div class="row mb-2">
+		<div class="col">
+		   {{input_text .uid }}
+		</div>
+		<div class="col">
+		   {{input_select .topupReportType }}
+		</div>
+	    </div>
+            <button type="submit" class="btn btn-primary mt-3">查询</button>
+	    <button class="btn btn-primary mt-3" onclick="tableToExcel('topup','新用户充值')">导出</button>
+        </div>
+    </div>
+
+
+    <table id="topup" class="table table-bordered">
+        <thead>
+            <tr>
+                {{range $h := index .report_header}}
+                <th>{{$h}}</th>
+                {{end}}
+            </tr>
+        </thead>
+        <tbody>
+            {{range .report_data}}
+            <tr>
+                {{range $data := index .}}
+                <td>{{$data}}</td>
+                {{end}}
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+
+</form>

@@ -1,0 +1,6 @@
+<label for="{{.Name}}" class="form-label">{{.Title}}</label>
+<input type="text" class="form-control" id="{{.Name}}" name="{{.Name}}" {{if .Help}}aria-describedby="{{.Name}}Help"
+    {{end}} value="{{.Value}}">
+{{if .Help}}
+<div id="{{.Name}}Help" class="form-text">{{.Help}}</div>
+{{end}}

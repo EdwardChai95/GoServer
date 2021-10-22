@@ -1,0 +1,10 @@
+<label for="{{.Name}}" class="form-label">{{.Title}}</label>
+<select class="form-select" aria-label="{{.Title}}" name="{{.Name}}">
+
+    {{range .Options}}
+    <option value="{{.val}}" {{if .selected}}selected{{end}}>{{.text}}</option>
+    {{end}}
+</select>
+{{if .Help}}
+<div id="{{.Name}}Help" class="form-text">{{.Help}}</div>
+{{end}}
