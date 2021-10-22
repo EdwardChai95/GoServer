@@ -1,0 +1,303 @@
+syntax = "proto3";
+
+option go_package = "../proto";
+
+
+package gs.proto.lobby;
+
+
+message createGameCoinLocker {
+  int64 guestAcc = 1;
+  string password=2;
+  int32 type = 3;
+  string code = 4;
+}
+
+message RegisterAccountReq {
+  string account = 1;
+  string password = 2;
+}
+message RegisterAccountRes {
+  string code = 1;
+  string token = 2;
+  string uid = 3;
+  string user_name = 4;
+  int64 face_uri = 5;
+  int64 money = 6;
+  int64 gameCoin=7;
+  repeated Currency currencies = 8;
+  string nickName=9;
+  string signature=10;
+}
+message LoginReq {
+  int32 type = 1;
+  string account = 2;
+  string password = 3;
+}
+message Currency {
+  int32 type = 1;
+  double balance = 2;
+}
+message LoginRes {
+  string code = 1;
+  string token = 2;
+  string uid = 3;
+  string user_name = 4;
+  int64 face_uri = 5;
+  int64 money = 6;
+  int64 gameCoin=7;
+  repeated Currency currencies = 8;
+  string nickName=9;
+  string signature=10;
+}
+
+message UpdatePriceReq{
+  string orderId=1;
+  double price=2;
+  string code = 3;
+}
+
+
+message DepositReq {
+  string uid = 1;
+  int32 type = 2;
+  double price=3;
+    int64 PackgeNumber=4;
+}
+message DepositRes {
+  string code = 1;
+  string orderId = 2;
+  int32 type = 3;
+  string account = 4;
+}
+message DepositItem {
+  string order_id = 2;
+  int32 type = 3;
+  string address = 4;
+  double balance = 5;
+  int32 status = 6;
+}
+
+message CheckDepositRes {
+  string code = 1;
+  DepositItem item = 2;
+}
+message CheckDepositReq {
+  string order_id = 1;
+}
+message GetDepositListReq {
+  string uid = 1;
+}
+message GetDepositListRes {
+  repeated DepositItem items = 1;
+}
+message UpdateCurrencyReq {
+  string uid = 1;
+}
+message UpdateCurrencyRes {
+  repeated Currency currencies = 1;
+}
+
+message TestRequest {
+  int64 IntField =1;
+  string StringField =2;
+}
+
+message TestMessage {
+  int64 Code=1;
+  string Message=2;
+}
+message VCodeReq{
+  string PhoneNumber = 1;
+}
+
+message VCodeRes{
+  string PhoneNumber = 1;
+  string VCode = 2;
+}
+
+message GetGuestReq{
+  int32 type = 1;
+  int64 guestAcc=2;
+}
+
+message GetGuestRes{
+  string code = 1;
+  string token = 2;
+  string uid = 3;
+  string user_name = 4;
+  int64 face_uri = 5;
+  int64 money = 6;
+  int64 gameCoin=7;
+  repeated Currency currencies = 8;
+  string nickName=9;
+  string signature=10;
+  int64 guestAcc=11;
+  int64 userAcc=12;
+	// bool has_LaBa = 13;
+  int64 LaBa=14;
+  int64 accLogin=15;
+  string loginReward=16;
+  string userLevel=17;
+}
+
+message BasicInfoReq{
+  int32 type = 1;
+  int64 guestAcc=2;
+  int64 userAcc=3;
+  string nickName=4;
+  string signature=5;
+}
+
+message BasicInfoRes {
+  string code=1;
+  string nickName=2;
+  string signature=3;
+}
+
+message BindGuestReq{
+  int32 type = 1;
+  int64 guestAcc=2;
+  int64 phoneNumber=3;
+  string password=4;
+
+}
+
+message BindGuestRes{
+  string code=1;
+  int64 userAcc=2;
+  string password=3;
+}
+
+message PhoneLoginReq{
+   int32 type = 1;
+  int64 UserAcc=2;
+  string password=3;
+}
+
+
+
+message UpdateItemReq{
+   int32 type = 1;
+  int64 guestAcc=2;
+  string itemName=3;
+  string operate =4;
+  int64 number =5;
+  string Code = 6;
+}
+
+
+message getClubReq {
+  string clubName = 1;
+}
+
+message Club {
+  string clubid = 1;
+  string clubname = 2;
+}
+
+message getClubRes {
+	repeated Club clubs = 1;
+}
+
+
+message checkUserReq {
+  string clubId = 1;
+  string uid = 2;
+}
+
+message checkUserRes {
+  string clubId = 1;
+  string uid = 2;
+  string type = 3;
+}
+
+message updateGameCoinReq {
+  int64 guestAcc = 1;
+  int64 coinNumber = 2;
+  string operate = 3;
+  int32 type = 4;
+}
+
+message updateGameCoinRes {
+  int64 guestAcc = 1;
+  int64 coinBalance = 2;
+  string code = 3;
+}
+
+message depositGameCoin {
+  int64 guestAcc = 1;
+  int64 coinNumber = 2;
+  int32 type = 3;
+  string code = 4;
+  int64 balance=5;
+}
+
+message getGameCoinLB {
+  int64 guestAcc = 1;
+  int32 type = 3;
+  string code = 4;
+  int64 balance=5;
+}
+
+message withdrawGameCoin {
+  int64 guestAcc = 1;
+  int64 coinNumber = 2;
+  int32 type = 3;
+  string code = 4;
+  int64 balance=5;
+  string password=6;
+}
+
+message  GameCoinLockerHistory  {
+	// int64 Id =1;
+	// int64 Uid     =2;
+	string Operate =1;
+	int64 Amount  =2;
+	int64 Date    =3;
+  int64 Balance=4;
+}
+
+message getGameCoinTR {
+  int64 guestAcc = 1;
+  int32 type = 2;
+  string code = 3;
+  repeated GameCoinLockerHistory records=4;
+}
+
+message setPassword {
+  int64 guestAcc = 1;
+  string password=2;
+  int32 type = 3;
+  string code = 4;
+}
+
+message initChainReq{
+  string address = 1;
+  string code = 2;
+  string result=3;
+}
+
+message RebateRecord {
+  int64 time = 1;
+  string id = 2;
+  double amount = 3;
+  double rebate=4;
+  int64 package=5;
+}
+
+message getRebateRecordReq{
+  string uid = 1;
+  repeated RebateRecord records=2;
+  string code = 3;
+}
+message setRebateRecordReq{
+  string uid = 1;
+  string code = 2;
+}
+
+message ethPayPollingReq{
+  string code =1;
+  int64 gameCoin=2;
+  string orderId=3;
+}

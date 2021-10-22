@@ -1,0 +1,1 @@
+{"__type__":"cc.AnimationClip","_name":"gameAniEdgeDim","_duration":2,"wrapMode":2,"curveData":{"paths":{"leftEdge":{"props":{"opacity":[{"frame":0,"value":255},{"frame":0.5,"value":127.5},{"frame":1,"value":63.75},{"frame":1.5,"value":127.5},{"frame":2,"value":255}]}}}}}

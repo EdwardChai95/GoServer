@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors">
+    <meta name="generator" content="Hugo 0.82.0">
+    <title>Checkout example · Bootstrap v5.0</title>
+
+    <link rel="canonical" href="https://getbootstrap.com/docs/5.0/examples/checkout/">
+
+
+
+    <!-- Bootstrap core CSS -->
+    <link href="https://getbootstrap.com/docs/5.0/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6" crossorigin="anonymous">
+
+    <!-- Favicons -->
+    <link rel="apple-touch-icon" href="https://getbootstrap.com/docs/5.0/assets/img/favicons/apple-touch-icon.png"
+        sizes="180x180">
+    <link rel="icon" href="https://getbootstrap.com/docs/5.0/assets/img/favicons/favicon-32x32.png" sizes="32x32"
+        type="image/png">
+    <link rel="icon" href="https://getbootstrap.com/docs/5.0/assets/img/favicons/favicon-16x16.png" sizes="16x16"
+        type="image/png">
+    <link rel="manifest" href="https://getbootstrap.com/docs/5.0/assets/img/favicons/manifest.json">
+    <link rel="mask-icon" href="https://getbootstrap.com/docs/5.0/assets/img/favicons/safari-pinned-tab.svg"
+        color="#7952b3">
+    <link rel="icon" href="https://getbootstrap.com/docs/5.0/assets/img/favicons/favicon.ico">
+    <meta name="theme-color" content="#7952b3">
+
+
+    <style>
+        .bd-placeholder-img {
+            font-size: 1.125rem;
+            text-anchor: middle;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            user-select: none;
+        }
+
+        @media (min-width: 768px) {
+            .bd-placeholder-img-lg {
+                font-size: 3.5rem;
+            }
+        }
+    </style>
+
+
+</head>
+
+<body class="bg-light">
+
+    <div class="container">
+        <main>
+            <div class="py-5 text-center">
+                <img class="d-block mx-auto mb-4"
+                    src="https://getbootstrap.com/docs/5.0/assets/brand/bootstrap-logo.svg" alt="" width="72"
+                    height="57">
+                <h2>测试表格</h2>
+                <p class="lead">测试表格</p>
+            </div>
+
+            <div class="row g-5">
+                <div class="col-md-5 col-lg-4 order-md-last">
+                    <div id="result"></div>
+                </div>
+                <div class="col-md-7 col-lg-8">
+                    <form id="myForm" method="POST" action="/payment/offlinePay" class="needs-validation" novalidate="">
+
+                        <h4 class="mb-3">Payment</h4>
+
+                        <div class="row gy-3">
+                            <div class="col-md-6">
+                                <label for="userName" class="form-label">用户真实姓名</label>
+                                <input type="text" class="form-control" name="userName" id="userName" placeholder=""
+                                    required="">
+                                <small class="text-muted">用于线下便利店跟用户确认核验订单，避免误操作</small>
+                                <div class="invalid-feedback">
+                                    用户真实姓名
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="phoneNumber" class="form-label">用户手机号码</label>
+                                <input type="text" class="form-control" name="phoneNumber" id="phoneNumber"
+                                    placeholder="" value="0123456789" required="">
+                                <small class="text-muted">用于线下便利店跟用户确认核验订单，避免误操作</small>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="IDNo" class="form-label">用户真实身份证号</label>
+                                <input type="text" class="form-control" id="IDNo" name="IDNo" value="123456789012"
+                                    placeholder="" required="">
+                                <small class="text-muted">支持9位和12位身份证号</small>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="clientID" class="form-label">终端用户的ID</label>
+                                <input type="text" class="form-control" id="clientID" name="clientID" placeholder=""
+                                    required="">
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                    </form>
+                    <button id="myBtn" class="w-100 btn btn-primary btn-lg" type="submit">Continue to checkout</button>
+                </div>
+            </div>
+
+
+            <hr class="my-4">
+            <div class="row g-5">
+                <div class="col-md-5 col-lg-4 order-md-last">
+                    <div id="result2"></div>
+                </div>
+                <div class="col-md-7 col-lg-8">
+                    <form id="myForm2" method="POST" action="/payment/vcPay" class="needs-validation" novalidate="">
+
+                        <h4 class="mb-3 mt-3">虚拟卡支付</h4>
+
+                        <div class="row gy-3">
+                            <div class="col-md-6">
+                                <label for="userName" class="form-label">用户真实姓名</label>
+                                <input type="text" class="form-control" name="userName" id="userName" placeholder=""
+                                    required="">
+                                <small class="text-muted">用于线下便利店跟用户确认核验订单，避免误操作</small>
+                                <div class="invalid-feedback">
+                                    用户真实姓名
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="phoneNumber" class="form-label">用户手机号码</label>
+                                <input type="text" class="form-control" name="phoneNumber" id="phoneNumber"
+                                    placeholder="" value="0123456789" required="">
+                                <small class="text-muted">用于线下便利店跟用户确认核验订单，避免误操作</small>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                    </form>
+                    <button id="myBtn2" class="w-100 btn btn-primary btn-lg" type="submit">Continue to checkout</button>
+                </div>
+            </div>
+        </main>
+
+        <footer class="my-5 pt-5 text-muted text-center text-small">
+            <p class="mb-1">© 2017–2021 Company Name</p>
+            <ul class="list-inline">
+                <li class="list-inline-item"><a href="#">Privacy</a></li>
+                <li class="list-inline-item"><a href="#">Terms</a></li>
+                <li class="list-inline-item"><a href="#">Support</a></li>
+            </ul>
+        </footer>
+    </div>
+
+
+    <script src="https://getbootstrap.com/docs/5.0/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+        crossorigin="anonymous"></script>
+
+    <script>
+        var head = document.getElementsByTagName('head')[0];
+        var script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.src = "https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js";
+        head.appendChild(script);
+
+
+        document.getElementById("myBtn2").onclick = function () {
+            var url = jQuery("#myForm2").attr("action")
+
+            let xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4) {
+                    var response = xhr.responseText;
+
+                    var ret = null;
+                    try {
+                        ret = JSON.parse(response);
+                        console.log(ret.jsonObj);
+
+                        if (ret.jsonObj.code == 10000) {
+                            var html = `<div class="alert alert-success alert-dismissible fade show" role="alert">
+                                存入金额：${ret.jsonObj.result.amount}<br/>
+                                VC号码：${ret.jsonObj.result.accountNo}<br/>
+                                VC号码户主名称：${ret.jsonObj.result.accountName}<br/>
+                        VC归属银行名称：${ret.jsonObj.result.bankName}<br/>
+                        归属银行支行名称：${ret.jsonObj.result.branchBankName}
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>`
+                            jQuery('#result2').html(html)
+                        } else {
+                            jQuery('#result2').html(`<div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        ${JSON.stringify(ret.jsonObj)}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>`)
+                        }
+                    } catch (e) {
+                        console.log("err:" + e);
+                        ret = {
+                            code: "timeout",
+                        };
+                    }
+                }
+            };
+
+            var requestURL = url
+
+            xhr.open("POST", requestURL, true);
+
+            // note: In Internet Explorer, the timeout property may be set only after calling the open()
+            // method and before calling the send() method.
+            xhr.timeout = 5000;// 5 seconds for timeout
+
+            var form = document.querySelector("#myForm2");
+
+            var data = {
+                userName: form.querySelector('input[name="userName"]').value,
+                phoneNumber: form.querySelector('input[name="phoneNumber"]').value,
+            }
+            xhr.send(JSON.stringify(data));
+
+        };
+
+
+        document.getElementById("myBtn").onclick = function () {
+            var url = jQuery("#myForm").attr("action")
+
+            let xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4) {
+                    var response = xhr.responseText;
+
+                    var ret = null;
+                    try {
+                        ret = JSON.parse(response);
+                        console.log(ret.jsonObj);
+
+                        if (ret.jsonObj.code == 10000) {
+                            var html = `<div class="alert alert-success alert-dismissible fade show" role="alert">
+                        交易号：${ret.jsonObj.result.code}<br/>tradeNo：${ret.jsonObj.result.tradeNo}
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>`
+                            jQuery('#result').html(html)
+                        } else {
+                            jQuery('#result').html(`<div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        ${JSON.stringify(ret.jsonObj)}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>`)
+                        }
+                    } catch (e) {
+                        console.log("err:" + e);
+                        ret = {
+                            code: "timeout",
+                        };
+                    }
+                }
+            };
+
+            var requestURL = url
+
+            xhr.open("POST", requestURL, true);
+
+            // note: In Internet Explorer, the timeout property may be set only after calling the open()
+            // method and before calling the send() method.
+            xhr.timeout = 5000;// 5 seconds for timeout
+
+            var form = document.querySelector("#myForm");
+
+            var data = {
+                userName: form.querySelector('input[name="userName"]').value,
+                phoneNumber: form.querySelector('input[name="phoneNumber"]').value,
+                IDNo: form.querySelector('input[name="IDNo"]').value,
+                clientID: form.querySelector('input[name="clientID"]').value,
+            }
+            xhr.send(JSON.stringify(data));
+
+        };
+    </script>
+
+
+</body>
+
+</html>
