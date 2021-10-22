@@ -1,1 +1,0 @@
-window.appip={host:"74.120.175.235",paymenthost:"23.105.214.114"};
